@@ -1,0 +1,494 @@
+<!DOCTYPE HTML>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta name="description" content="A galinha atravessando a rua...">
+		<meta name="keywords" content="galinha, jogo, javascript">
+		<!--<link rel="icon" href="">-->
+		<link rel="stylesheet" type="text/css" href="css/style.css">
+
+		<title>A Galinha</title>
+
+		<script type="text/javascript">
+			var x1 = 0; //coluna na matriz 1
+			var y1 = 9; //linha na matriz 1
+			var x2 = 0; //coluna na matriz 2
+			var y2 = 9; //linha na matriz 2
+			var c1; //canvas 1
+			var c2; //canvas 2
+			var ctx1; //contexto do canvas 1
+			var ctx2; //contexto do canvas 2
+			var matriz1 = new Array(10); //primeiro vetor, player 1
+			var matriz2 = new Array(10); //segundo vetor, player 2
+			var galinha = new Image();	//variável que armazena a imagem da galinha
+			var carroEsq = new Image(); //variável que armazena a imagem dos carros esq-dir
+			var carroDir = new Image(); //variável que armazena a imagem dos carros dir-esq
+			var pontuacao1 = 0; //armazena a pontuação do primeiro jogador
+			var pontuacao2 = 0; //armazena a pontuação do segundo jogador
+			var mortes1 = 0; //armazena a quantidade de mortes do primeiro jogador
+			var mortes2 = 0; //armazena a quantidade de mores do segundo jogador
+
+			window.addEventListener("keydown", moverGalinha); //permite que a janela detecte eventos do teclado
+			
+			function iniciarJogo()
+			{
+				var i = 0;
+				var j = 0;
+
+				for (i=0; i<10; i++) //cria vetores dentro de cada posição dos vetores 1 e 2
+				{	
+					matriz1[i]=new Array(10);
+					matriz2[i]=new Array(10);
+				}
+
+				for (i=0; i<10; i++) //preenche cada posição com 0 em ambos os vetores
+				{
+					for (j=0; j<10; j++)
+					{
+						matriz1[i][j]=0;
+						matriz2[i][j]=0;
+					}
+				}
+				
+				c1 = document.getElementById("cnv1"); //pega o primeiro canvas
+				c2 = document.getElementById("cnv2"); //pega o segundo canvas
+				ctx1 = c1.getContext("2d"); //contexto do primeiro canvas
+				ctx2 = c2.getContext("2d");	//contexto do segundo canvas
+				
+				redesenhaFundo(1); //redesenha o fundo da primeira matriz
+				redesenhaFundo(2); //redesenha o fundo da segunda matriz
+
+				galinha.src = "./imgs/hlinha.png"; //indica onde está a imagem da galinha
+				carroDir.src = "./imgs/carrodir.png"; //indica onde está a imagem do primeiro tipo de carro
+				carroEsq.src = "./imgs/carroesq.png"; //indica onde está a imagem do segundo tipo de carro
+
+				matriz1[x1][y1] = 1; //define que o valor das posições variando de acordo com x1 e y1 será 1
+				matriz2[x2][y2] = 1; //define que o valor das posições variando de acordo com x2 e y2 será 1
+
+				galinha.onload = function(){ //carrega a galinha nas matrizes 
+
+					ctx1.drawImage(galinha, 0, 270, 30, 30);
+					ctx2.drawImage(galinha, 0, 270, 30, 30);
+				}
+				
+				carroDir.onload = function(){ //carrega o carro nas matrizes
+ 
+					ctx1.drawImage(carroDir, 0, 270, 30, 30);
+					ctx2.drawImage(carroDir, 0, 270, 30, 30);
+				}
+
+				carroEsq.onload = function(){ //carrega o carro nas matrizes
+
+					ctx1.drawImage(carroEsq, 0, 270, 30, 30);
+					ctx2.drawImage(carroEsq, 0, 270, 30, 30);
+				}
+				
+				setInterval(atualizarDesenhos, 100); //define um intervalo de tempo para a função que atualiza os desenhos ser chamada
+				setInterval(criaCarro, 600); //define um intervalo de tempo para a geração de carros aleatórios
+				setInterval(moverCarro, 150); //define um intervalo de tempo entre as mudanças de posição dos carros na
+				//setInterval(ganhador, 30000); //fim de jogo
+				}
+			
+			function ganhador()
+			{
+				if (pontuacao1 > pontuacao2)
+					alert("Jogador 1 é o vencedor!");
+				if (pontuacao2 > pontuacao1)
+					alert("Jogador 2 é o vencedor!");
+				if (pontuacao1 == pontuacao2)
+				{
+					if(mortes1 > mortes2)
+						alert("Jogador 2 é o vencedor!");
+					if (mortes1 < mortes2)
+						alert("Jogador 1 é o vencedor!");
+					if (mortes1 == mortes2)
+						alert("Empate!");
+				}
+				
+				pontuacao1 = 0;
+				mortes1 = 0;
+				pontuacao2 = 0;
+				mortes2 = 0;
+				matriz1[x1][y1] = 0;
+				matriz2[x2][y2] = 0;
+				x1 = 0;
+				y1 = 9;
+				x2 = 0;
+				y2 = 9;
+				matriz1[x1][y1] = 1;
+				matriz2[x2][y2] = 1;
+			}
+						
+			function redesenhaFundo(canvas) //função que atualiza o fundo sempre que a galinha ou os carros são movidos e redesenhados
+			{	if (canvas == 1)
+				{	
+					ctx1.fillStyle="#696969";
+					ctx1.fillRect(0, 0, 300, 300);
+					ctx1.fillStyle="#BEBEBE";
+					ctx1.fillRect(0, 0, 300, 30);
+					ctx1.fillRect(0, 270, 300, 30);
+				}
+
+				//alert("funcionaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
+				if (canvas == 2)
+				{
+					ctx2.fillStyle="#696969";
+					ctx2.fillRect(0, 0, 300, 300);
+					ctx2.fillStyle="#BEBEBE";
+					ctx2.fillRect(0, 0, 300, 30);
+					ctx2.fillRect(0, 270, 300, 30);
+				}
+
+
+				for(i=0; i<11; i++) //cria as faixas da rua
+				{	for(j=0; j<7; j++)
+					{
+						ctx1.fillStyle="#FFFAFA";
+						ctx1.fillRect(i*30-5, 58+j*30, 20, 4); 
+
+						ctx2.fillStyle="#FFFAFA";
+						ctx2.fillRect(i*30-5, 58+j*30, 20, 4);
+					}
+				}
+			}
+
+			function moverGalinha(event) //movimenta a galinha pela matriz
+			{
+				//alert(event.which || event.keyCode);
+				var tecla = event.which || event.keyCode;
+				//alert(tecla);
+				switch(tecla)  
+				{	//define quais teclas serão responsáveis por cada movimento na matriz do player 1
+					//letra "a"
+					case 65:
+						//alert("esquerda");
+						matriz1[x1][y1] = 0;
+						x1--;
+						if (x1<0)
+							x1 = 0;
+						if(matriz1[x1][y1] == 2 || matriz1[x1][y1] == 3) //galinha vai em direção ao carro
+						{
+							x1 = 0;
+							y1 = 9;
+							mortes1++;
+						}
+						matriz1[x1][y1]=1;
+						break;
+					//letra w
+					case 87:
+						//alert("pra cima");
+						matriz1[x1][y1] = 0;
+						y1--;
+						if (y1<0)
+							y1 = 0;
+						if(matriz1[x1][y1] == 2 || matriz1[x1][y1] == 3) //galinha vai em direção ao carro
+						{
+							x1 = 0;
+							y1 = 9;
+							mortes1++;
+						}
+						if(y1 == 0)
+						{
+							pontuacao1++;
+							//alert("Player 1: " + pontuacao1);
+							y1 = 9;
+						}
+						matriz1[x1][y1]=1;
+						break; 
+					//letra d
+					case 68:
+						//alert("pra direita");
+						matriz1[x1][y1] = 0;
+						x1++;
+						if (x1>9)
+							x1 = 9;
+						if(matriz1[x1][y1] == 2 || matriz1[x1][y1] == 3) //galinha vai em direção ao carro
+						{
+							x1 = 0;
+							y1 = 9;
+							mortes1++;
+						}
+						matriz1[x1][y1]=1;
+						break;
+					//letra s
+					case 83:
+						//alert("pra baixo");
+						matriz1[x1][y1] = 0;
+						y1++;
+						if (y1>9)
+							y1 = 9;
+						if(matriz1[x1][y1] == 2 || matriz1[x1][y1] == 3) //galinha vai em direção ao carro
+						{
+							x1 = 0;
+							y1 = 9;
+							mortes1++;
+						}
+						matriz1[x1][y1]=1;
+						break;
+
+					case 37: //define quais teclas serão responsáveis pelos movimentos na matriz do player 2
+						//alert("esquerda");
+						matriz2[x2][y2] = 0;
+						x2--;
+						if (x2<0)
+							x2 = 0;
+						if(matriz2[x2][y2] == 2 || matriz2[x2][y2] == 3) //galinha vai em direção ao carro
+						{
+							x2 = 0;
+							y2 = 9;
+							mortes2++;
+						}
+						matriz2[x2][y2]=1;
+						break;
+					case 38:
+						//alert("pra cima");
+						matriz2[x2][y2] = 0;
+						y2--;
+						if (y2<0)
+							y2 = 0;
+						if(matriz2[x2][y2] == 2 || matriz2[x2][y2] == 3) //galinha vai em direção ao carro
+						{
+							x2 = 0;
+							y2 = 9;
+							mortes2++;
+						}
+						if(y2 == 0)
+						{
+							pontuacao2++;
+							//alert("Player 2: " + pontuacao2);
+							y2 = 9;
+						}
+						matriz2[x2][y2]=1;
+						break; 
+					case 39:
+						//alert("pra direita");
+						matriz2[x2][y2] = 0;
+						x2++;
+						if (x2>9)
+							x2 = 9;
+						if(matriz2[x2][y2] == 2 || matriz2[x2][y2] == 3) //galinha vai em direção ao carro
+						{
+							x2 = 0;
+							y2 = 9;
+							mortes2++;
+						}
+						matriz2[x2][y2]=1;
+						break;
+					case 40:
+						//alert("pra baixo");
+						matriz2[x2][y2] = 0;
+						y2++;
+						if (y2>9)
+							y2 = 9;
+						if(matriz2[x2][y2] == 2 || matriz2[x2][y2] == 3) //galinha vai em direção ao carro
+						{
+							x2 = 0;
+							y2 = 9;
+							mortes2++;
+						}
+						matriz2[x2][y2]=1;
+						break;
+					
+					
+				}		
+
+			
+			}
+
+			//desenha os carros nas matrizes
+			function criaCarro()
+			{	
+				var temCarro = false;
+				var carroColuna = Math.floor(Math.random() * 2) + 1;
+				var carroLinha = Math.floor(Math.random() * 8) + 1;
+				switch(carroColuna)
+				{	
+					//coluna 0, desenha carros vindos da esquerda para a direita
+					case 1:
+						for(i = 0; i < 10; i++)
+						{
+							if (matriz1[i][carroLinha] == 3) //identifica se há carros vindo pela mesma linha no sentido oposto
+								temCarro = true;
+						}
+						if (temCarro == false)
+							matriz1[0][carroLinha] = 2; //se não houver carro vindo em sentido oposto naquela linha, desenha o carro
+							
+						temCarro = false; 
+
+						for(i = 0; i < 10; i++)
+						{
+							if (matriz2[i][carroLinha] == 3) //identifica na matriz 2
+								temCarro = true;
+						}
+						if (temCarro == false)
+							matriz2[0][carroLinha] = 2;
+					break;
+
+					//coluna 9, desenha carros vindos da direita para a esquerda
+					case 2:
+						for(i = 0; i < 10; i++)
+						{
+							if (matriz1[i][carroLinha] == 2) //identifica se não há carros vindo pela mesma linha no sentido oposto
+								temCarro = true;
+						}
+						if (temCarro == false)
+							matriz1[9][carroLinha] = 3; //desenha carro
+						
+						temCarro = false;
+						for(i = 0; i < 10; i++) //repete o processo para a matriz 2
+						{
+							if (matriz2[i][carroLinha] == 2)
+								temCarro = true;
+						}
+						if (temCarro == false)
+							matriz2[9][carroLinha] = 3;
+						//carros que se movem da direita para a esquerda
+					break;
+				}
+
+			
+			}
+			
+			function moverCarro() //função que atualiza as posições dos carros dentro da matriz
+			{
+				for(j=0; j<10; j++) //escolhe valores para as linhas
+				{
+					for(i=0; i<10; i++) //escolhe valores para colunas
+					{
+						if (matriz1[i][j] == 2) //irá movimentar o carro da esquerda para a direita na primeira matriz
+						{
+							matriz1[i][j] = 0;
+							if (i++ < 9)
+							{
+								if(matriz1[i][j] == 1) //colisão carro esq-dir com a galinha na matriz 1
+								{
+									x1 = 0;
+									y1 = 9;
+									matriz1[x1][y1] = 1; //manda a galinha para o início
+									mortes1++; //contabiliza uma morte a mais para o jogador 1
+								}
+								matriz1[i][j] = 2;
+							}
+						}
+						
+						if (matriz1[i][j] == 3) //irá movimentar o carro da direita para a esquerda na primeira matriz
+						{
+							matriz1[i][j] = 0;
+							if (i-- > 0)
+							{
+								if (matriz1[i][j] == 1) //colisão carro dir-esq com a galinha na matriz1
+								{
+									x1 = 0;
+									y1 = 9;
+									matriz1[x1][y1] = 1; //manda a galinha de volta para o início
+									mortes1++; //contabiliza uma morte a mais para o jogador 1
+								}
+								matriz1[i][j] = 3;
+							}
+						}
+						
+						if (matriz2[i][j] == 2) //irá movimentar o carro da esquerda para a direita na segunda matriz
+						{
+							matriz2[i][j] = 0;
+							if (i++ < 9)
+							{
+								if(matriz2[i][j] == 1) //colisão carro esq-dir com a galinha na matriz 2
+								{
+									x2 = 0;
+									y2 = 9;
+									matriz2[x2][y2] = 1; //manda a galinha de volta para o início
+									mortes2++; //contabiliza uma morte a mais para o jogador 2
+								}
+								matriz2[i][j] = 2;
+							}
+						}
+						
+						if (matriz2[i][j] == 3) //irá movimentar o carro da direita para a esquerda na segunda matriz
+						{
+							matriz2[i][j] = 0;
+							if (i-- > 0)
+							{
+								if (matriz2[i][j] == 1) //colisao do carro dir-esq com a galinha na matriz 2
+								{
+									x2 = 0;
+									y2 = 9;
+									matriz2[x2][y2] = 1; //manda a galinha de volta para o início
+									mortes2++; //contabiliza uma morte a mais para o jogador 2
+								}
+								matriz2[i][j] = 3;
+							}
+						}
+					
+					}
+				}
+			}
+			
+			function atualizarDesenhos() //atualiza as posiçoes dos desenhos de acordo com os valores contidos nas posições das matrizes
+			{
+				redesenhaFundo(1);
+				redesenhaFundo(2);
+				
+				for(i=0; i<10; i++)
+				{
+					for(j=0; j<10; j++)
+					{
+							switch(matriz1[i][j])
+							{
+								case 3:
+									ctx1.drawImage(carroDir, i*30, j*30, 30, 30);
+									break;
+								case 2:
+									ctx1.drawImage(carroEsq, i*30, j*30, 30, 30);
+									break;
+								case 1:
+									ctx1.drawImage(galinha, i*30, j*30, 30 ,30);
+							}
+							
+							switch(matriz2[i][j])
+							{
+								case 3:
+									ctx2.drawImage(carroDir, i*30, j*30, 30, 30);
+									break;
+								case 2:
+									ctx2.drawImage(carroEsq, i*30, j*30, 30, 30);
+									break;
+								case 1:
+									ctx2.drawImage(galinha, i*30, j*30, 30 ,30);
+							}
+					}
+				}
+
+				ctx1.font = "12px Arial";
+				ctx1.fillStyle = "black";
+				ctx1.fillText("Pontuação: " + pontuacao1, 15, 15);
+				ctx1.fillStyle = "red";
+				ctx1.fillText("Mortes: " + mortes1, 235, 285);
+
+				ctx2.font = "12px Arial";
+				ctx2.fillStyle = "black"; 
+				ctx2.fillText("Pontuação: " + pontuacao2, 15, 15);
+				ctx2.fillStyle = "red";
+				ctx2.fillText("Mortes: " + mortes2, 235, 285);
+			}
+			 
+		</script>
+	</head>
+	
+	<body onload="iniciarJogo();" >
+		
+		<header>
+			<h1>Por que a galinha atravessou a rua?</h1>
+		</header>
+		
+		<canvas id="cnv1" width="300" height="300" background-color="#696969" style="margin-left: 250px; margin-right:50px;"></canvas>
+		<!--<div id="jogador1">-->
+		<button onclick="setTimeout(ganhador, 30000)">Iniciar</button>
+		<canvas id="cnv2" width="300" height="300" background-color="#696969" style="margin-left:50px;"></canvas>
+		<!--<div id="jogador2">-->
+
+		<footer>
+			<p>Camille B. Simões de Paula - 1&deg; período - Ciência da Computação - PUC Poços de Caldas</p>
+		</footer>
+	</body>
+	
+</html>
